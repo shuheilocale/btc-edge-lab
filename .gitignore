@@ -1,6 +1,7 @@
 data/raw/*.csv
 data/processed/*.csv
 data/onchain/*.csv
+data/trade/
 output/reports/**/*.json
 output/reports/**/*.png
 __pycache__/

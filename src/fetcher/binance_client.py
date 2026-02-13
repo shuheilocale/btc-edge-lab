@@ -12,6 +12,7 @@ import requests
 from src.common.utils import (
     PROCESSED_DIR,
     RAW_DIR,
+    datetime_to_ms,
     ms_to_datetime,
     setup_logger,
     write_csv,
@@ -209,6 +210,65 @@ def fetch_all() -> dict[str, pd.DataFrame]:
     for interval in INTERVALS:
         results[interval] = fetch_and_save(interval)
     return results
+
+
+def fetch_latest(interval: str = "1d") -> pd.DataFrame:
+    """既存CSVの最終タイムスタンプ以降の差分データを取得・追記する。
+
+    Args:
+        interval: 時間足（例: "1d", "4h", "1h"）。
+
+    Returns:
+        更新後のクリーニング済み DataFrame（全期間）。
+    """
+    filename = f"btcusdt_{interval}.csv"
+    processed_path = PROCESSED_DIR / filename
+
+    now = datetime.now(tz=timezone.utc)
+    end_ms = int(now.timestamp() * 1000)
+
+    if processed_path.exists():
+        existing_df = pd.read_csv(processed_path, parse_dates=["timestamp"])
+        last_ts = existing_df["timestamp"].max()
+        start_ms = datetime_to_ms(last_ts) + 1
+        logger.info(
+            "Incremental fetch %s %s from %s",
+            SYMBOL, interval, last_ts,
+        )
+    else:
+        start = now - timedelta(days=365 * YEARS_BACK)
+        start_ms = int(start.timestamp() * 1000)
+        existing_df = pd.DataFrame()
+        logger.info("No existing data, full fetch for %s %s", SYMBOL, interval)
+
+    if start_ms >= end_ms:
+        logger.info("Data is already up to date for %s %s", SYMBOL, interval)
+        return existing_df
+
+    klines = fetch_klines(SYMBOL, interval, start_ms, end_ms)
+    if not klines:
+        logger.info("No new klines for %s %s", SYMBOL, interval)
+        return existing_df
+
+    raw_df = klines_to_raw_df(klines)
+    new_df = clean_klines(raw_df)
+    logger.info("Fetched %d new rows for %s %s", len(new_df), SYMBOL, interval)
+
+    if not existing_df.empty:
+        combined = pd.concat([existing_df, new_df], ignore_index=True)
+        combined = combined.drop_duplicates(subset=["timestamp"], keep="last")
+        combined = combined.sort_values("timestamp").reset_index(drop=True)
+    else:
+        combined = new_df
+
+    write_csv(combined, "processed", filename)
+    logger.info(
+        "Updated %s: %d rows, %s to %s",
+        filename, len(combined),
+        combined["timestamp"].min(),
+        combined["timestamp"].max(),
+    )
+    return combined
 
 
 if __name__ == "__main__":

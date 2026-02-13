@@ -27,6 +27,7 @@ Binance APIからBTC/USDTの過去データを取得し、複数の分析手法�
   - ta-analyst → `src/technical/`
   - anomaly-detective → `src/anomaly/`
   - onchain-analyst → `src/onchain/`
+  - signal-trader → `src/trader/`
 - `src/common/` はリードが管理。チームメイトはimportのみ可
 - データ共有は `data/` ディレクトリ経由（CSVファイル）
 - 分析結果は `output/reports/{担当名}/` に JSON + PNG で出力

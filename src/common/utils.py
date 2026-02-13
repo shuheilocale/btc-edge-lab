@@ -18,6 +18,7 @@ DATA_DIR = PROJECT_ROOT / "data"
 RAW_DIR = DATA_DIR / "raw"
 PROCESSED_DIR = DATA_DIR / "processed"
 ONCHAIN_DIR = DATA_DIR / "onchain"
+TRADE_DIR = DATA_DIR / "trade"
 REPORTS_DIR = PROJECT_ROOT / "output" / "reports"
 
 
