@@ -1,0 +1,11 @@
+data/raw/*.csv
+data/processed/*.csv
+data/onchain/*.csv
+output/reports/**/*.json
+output/reports/**/*.png
+__pycache__/
+*.pyc
+.env
+venv/
+.venv/
+node_modules/
